@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
 type Bot struct {
@@ -19,6 +20,9 @@ func NewBot(bot *tgbotapi.BotAPI) *Bot {
 func (b *Bot) Start() error {
 	b.bot.Debug = true
 	log.Printf("Authorized on account %s", b.bot.Self.UserName)
+
+	/** Запускает горутину, что будет приемки фотографий */
+	b.startWaitForPhoto()
 
 	updateConfig := tgbotapi.NewUpdate(0)
 	updateConfig.Timeout = 60
@@ -36,70 +40,80 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) error {
 	for update := range updates {
 		message := update.Message
 
-		if message.Chat.IsChannel() || message.Chat.IsGroup() || message.Chat.IsSuperGroup() {
+		// if message == nil {
+		// 	continue
+		// }
+
+		if isMessageFromGroupOrChannel(message) {
 			continue
 		}
 
-		if isMessageStart(&update) {
-			msg := tgbotapi.NewMessage(message.Chat.ID, Begin)
-			msg.ReplyToMessageID = message.MessageID
-
-			_, err := b.bot.Send(msg)
+		if message.IsCommand() {
+			err := b.handleCommand(message)
 			if err != nil {
 				return err
 			}
-
 			continue
 		}
 
-		if isMessagePhoto(&update) {
-			msg := tgbotapi.NewMessage(message.Chat.ID, PhotoOk)
-			msg.ReplyToMessageID = message.MessageID
-			_, err := b.bot.Send(msg)
-			if err != nil {
-				return err
-			}
+		/** TODO: Работает только в том случае, если есть голосование */
 
-			tgnotify.Create(message, Photo, message.Photo[0].FileID)
-
-			continue
+		if err := b.handleMessage(message); err != nil {
+			return err
 		}
 
-		if isMessageVideo(&update) {
-			msg := tgbotapi.NewMessage(message.Chat.ID, VideoOk)
-			msg.ReplyToMessageID = message.MessageID
-			_, err := b.bot.Send(msg)
-			if err != nil {
-				return err
-			}
-
-			tgnotify.Create(message, Video, message.Video.FileID)
-
-			continue
-		}
-
-		if isMessageVideoNote(&update) {
-			msg := tgbotapi.NewMessage(message.Chat.ID, VideoNoteOk)
-			msg.ReplyToMessageID = message.MessageID
-			_, err := b.bot.Send(msg)
-			if err != nil {
-				return err
-			}
-
-			tgnotify.Create(message, VideoNote, message.VideoNote.FileID)
-
-			continue
-		}
+		continue
 	}
 
 	return nil
 }
 
-func getChatId() int64 {
-	chatId, err := strconv.ParseInt(os.Getenv("TELEGRAM_CHAT_ID"), 10, 64)
-	if err != nil {
-		log.Fatal("Ошибка чтения конфига чата")
-	}
+func (b *Bot) startWaitForPhoto() {
+	go func() {
+		for {
+			timeNotification := getTimeForNotification()
+			currentTime := time.TimeOnly
+			chatId := fromStringToInt64(os.Getenv("TELEGRAM_CHAT_ID"))
 
-	return chatId
+			log.Printf("Выбранное время нотификации: %s\n", timeNotification)
+			log.Printf("Текущее время: %s\n", currentTime)
+
+			if timeNotification < currentTime {
+				time.Sleep(time.Hour)
+			}
+
+			if timeNotification == currentTime || timeNotification > currentTime {
+				msgBegin := tgbotapi.NewMessage(chatId, PhotoBegin)
+				b.bot.Send(msgBegin)
+
+				time.Sleep(time.Minute * 20)
+
+				msgRunOut := tgbotapi.NewMessage(chatId, PhotoRunOut)
+				b.bot.Send(msgRunOut)
+
+				time.Sleep(time.Minute * 10)
+
+				msgEnd := tgbotapi.NewMessage(chatId, PhotoEnd)
+				b.bot.Send(msgEnd)
+
+				b.sendAllPhotosInChat()
+
+				time.Sleep(time.Hour * 24)
+			}
+		}
+	}()
+}
+
+func (b *Bot) sendAllPhotosInChat() {
+	allNotify, _ := tgnotify.GetAll()
+	// отправка фоток в основной канал группы
+	for _, notify := range allNotify {
+		msgForChat := tgbotapi.NewMessage(fromStringToInt64(notify.TelegramChatId), notify.UserName)
+		b.bot.Send(msgForChat)
+	}
+}
+
+func fromStringToInt64(text string) int64 {
+	chatId, _ := strconv.Atoi(text)
+	return int64(chatId)
 }

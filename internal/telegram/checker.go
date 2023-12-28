@@ -2,27 +2,18 @@ package telegram
 
 import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
-func isMessageStart(update *tgbotapi.Update) bool {
-	return update.Message != nil && update.Message.Text == "/start"
+func isMessageFromGroupOrChannel(message *tgbotapi.Message) bool {
+	return message.Chat.IsChannel() || message.Chat.IsGroup() || message.Chat.IsSuperGroup()
 }
 
-func isMessagePhoto(update *tgbotapi.Update) bool {
-	return update.Message != nil && update.Message.Photo != nil
+func isMessagePhoto(message *tgbotapi.Message) bool {
+	return message.Photo != nil
 }
 
-func isMessageCallback(update *tgbotapi.Update) bool {
-	return update.CallbackQuery != nil && update.CallbackQuery.Data != ""
+func isMessageVideo(message *tgbotapi.Message) bool {
+	return message.Video != nil
 }
 
-func isMessageVideo(update *tgbotapi.Update) bool {
-	return update.Message != nil && update.Message.Video != nil
-}
-
-/** Кружочки */
-func isMessageVideoNote(update *tgbotapi.Update) bool {
-	return update.Message != nil && update.Message.VideoNote != nil
-}
-
-func isMessageVoice(update *tgbotapi.Update) bool {
-	return update.Message != nil && update.Message.Voice != nil
+func isMessageVideoNote(message *tgbotapi.Message) bool {
+	return message.VideoNote != nil
 }
