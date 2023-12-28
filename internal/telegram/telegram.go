@@ -1,11 +1,13 @@
 package telegram
 
 import (
+	"BeCoolRealBot/internal/helpers"
+	"BeCoolRealBot/internal/models"
 	tgnotify "BeCoolRealBot/internal/repositories/telegram_notification"
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -73,7 +75,7 @@ func (b *Bot) startWaitForPhoto() {
 		for {
 			timeNotification := getTimeForNotification()
 			currentTime := time.TimeOnly
-			chatId := fromStringToInt64(os.Getenv("TELEGRAM_CHAT_ID"))
+			chatId := helpers.FromStringToInt64(os.Getenv("TELEGRAM_CHAT_ID"))
 
 			log.Printf("Выбранное время нотификации: %s\n", timeNotification)
 			log.Printf("Текущее время: %s\n", currentTime)
@@ -96,7 +98,7 @@ func (b *Bot) startWaitForPhoto() {
 				msgEnd := tgbotapi.NewMessage(chatId, PhotoEnd)
 				b.bot.Send(msgEnd)
 
-				b.sendAllPhotosInChat()
+				b.sendAllPhotosInChat(chatId)
 
 				time.Sleep(time.Hour * 24)
 			}
@@ -104,16 +106,22 @@ func (b *Bot) startWaitForPhoto() {
 	}()
 }
 
-func (b *Bot) sendAllPhotosInChat() {
+func (b *Bot) sendAllPhotosInChat(chatId int64) {
 	allNotify, _ := tgnotify.GetAll()
+
 	// отправка фоток в основной канал группы
 	for _, notify := range allNotify {
-		msgForChat := tgbotapi.NewMessage(fromStringToInt64(notify.TelegramChatId), notify.UserName)
-		b.bot.Send(msgForChat)
+		b.sendMessageForChat(chatId, notify)
 	}
 }
 
-func fromStringToInt64(text string) int64 {
-	chatId, _ := strconv.Atoi(text)
-	return int64(chatId)
+func (b *Bot) sendMessageForChat(chatId int64, notify models.TelegramNotification) error {
+	if notify.MediaType == Photo {
+		msg := tgbotapi.NewPhoto(chatId, tgbotapi.FileID(notify.MediaId))
+		msg.Caption = fmt.Sprintf("%s", notify.SendTime)
+		b.bot.Send(msg)
+	}
+	// TODO: other types of media type
+
+	return nil
 }

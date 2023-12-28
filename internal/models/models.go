@@ -5,13 +5,20 @@ import (
 	"time"
 )
 
-type TelegramNotifications struct {
+type TelegramNotification struct {
 	gorm.Model
-	UserName       string
-	TelegramUserId string
-	TelegramChatId string
+	TelegramUserId int64
+	TelegramChatId int64
 	MediaType      string
 	MediaId        string
 	IsSend         bool
 	SendTime       time.Time
+}
+
+type TelegramUser struct {
+	gorm.Model
+	Username       string
+	FirstName      string
+	LastName       string
+	TelegramUserId int64
 }

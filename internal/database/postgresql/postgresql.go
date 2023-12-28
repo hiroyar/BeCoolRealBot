@@ -35,7 +35,7 @@ func Connect() {
 	log.Println("Connected to db")
 	db.Logger = logger.Default.LogMode(logger.Info)
 
-	err = db.AutoMigrate(&models.TelegramNotifications{})
+	err = db.AutoMigrate(&models.TelegramNotification{}, &models.TelegramUser{})
 	if err != nil {
 		log.Fatal("Failed to connect to migrate. \n", err)
 	}
