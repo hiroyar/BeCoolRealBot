@@ -9,11 +9,7 @@ import (
 )
 
 func main() {
-	log.Println("try connect!")
-
 	postgresql.Connect()
-
-	log.Println("Successfully connected!")
 
 	telegramBotToken := os.Getenv("TELEGRAM_BOT_API")
 	bot, err := tgbotapi.NewBotAPI(telegramBotToken)

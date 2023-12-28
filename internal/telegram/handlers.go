@@ -14,7 +14,6 @@ const (
 )
 
 func (b *Bot) handleCommand(message *tgbotapi.Message) error {
-
 	var user models.TelegramUser
 	result := postgresql.DB.Db.First(&user, "telegram_user_id = ?", message.Chat.ID)
 
@@ -34,7 +33,6 @@ func (b *Bot) handleCommand(message *tgbotapi.Message) error {
 		if err != nil {
 			return err
 		}
-
 	case commandStop:
 		msg := tgbotapi.NewMessage(message.Chat.ID, "test")
 

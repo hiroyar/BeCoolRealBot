@@ -18,3 +18,12 @@ func Create(message *tgbotapi.Message) {
 func DeletePermanently(user models.TelegramUser) {
 	postgresql.DB.Db.Unscoped().Delete(&user)
 }
+
+func GetAll() ([]models.TelegramUser, error) {
+	var users []models.TelegramUser
+	result := postgresql.DB.Db.Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return users, nil
+}
