@@ -3,7 +3,7 @@ services:
   app:
     container_name: golang-app
     build:
-      dockerfile: ./deployments/Docker/Dockerfile
+      dockerfile: config/docker/Dockerfile
     env_file:
       - .env
     ports:
@@ -34,16 +34,16 @@ services:
     networks:
       - backend
 
-#  migrator:
-#    image: migrate/migrate
-#    depends_on:
-#      db:
-#        condition: service_healthy
-#    volumes:
-#      - ./schema:/schema
-#    command: [ "-path", "/schema", "-database", "${DB_URL}?sslmode=disable", "up" ]
-#    networks:
-#      - backend
+  redis:
+    container_name: "redis"
+    image: redis:alpine
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - $PWD/config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - backend
 
 volumes:
   postgres_data:

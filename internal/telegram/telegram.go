@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"BeCoolRealBot/internal/database/redis"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 )
@@ -48,18 +49,18 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) error {
 			continue
 		}
 
-		/** TODO: Работает только в том случае, если есть голосование */
-		if true {
+		if redis.Cache.Db.Get(Start).String() == "0" {
 			errMsg := tgbotapi.NewMessage(message.Chat.ID, PhotoBad)
-			b.bot.Send(errMsg)
+			_, err := b.bot.Send(errMsg)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
 		if err := b.handleMessage(message); err != nil {
 			return err
 		}
-
-		continue
 	}
 
 	return nil

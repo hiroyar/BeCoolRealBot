@@ -10,11 +10,11 @@ import (
 	"os"
 )
 
-type DbInstance struct {
+type Instance struct {
 	Db *gorm.DB
 }
 
-var DB DbInstance
+var DB Instance
 
 func Connect() {
 	dsn := fmt.Sprintf(
@@ -41,7 +41,7 @@ func Connect() {
 		log.Fatal("Failed to connect to migrate. \n", err)
 	}
 
-	DB = DbInstance{
+	DB = Instance{
 		Db: db,
 	}
 }

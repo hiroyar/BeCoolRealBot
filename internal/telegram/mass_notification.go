@@ -1,10 +1,12 @@
 package telegram
 
 import (
+	"BeCoolRealBot/internal/database/redis"
 	"BeCoolRealBot/internal/helpers"
 	"BeCoolRealBot/internal/models"
 	tgnotify "BeCoolRealBot/internal/repositories/telegram_notification"
 	"BeCoolRealBot/internal/repositories/telegram_user"
+	"errors"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"os"
@@ -23,12 +25,17 @@ func (b *Bot) startWaitForPhoto() {
 			if timeNotification < currentTime {
 				time.Sleep(time.Hour)
 			} else {
+				redis.Cache.Db.Set(Start, "1", 0)
+
 				allUsers, _ := telegram_user.GetAll()
 
 				go func() {
 					for _, user := range allUsers {
 						msgBegin := tgbotapi.NewMessage(user.TelegramUserId, PhotoBegin)
-						b.bot.Send(msgBegin)
+						_, err := b.bot.Send(msgBegin)
+						if err != nil {
+							log.Println(err)
+						}
 					}
 				}()
 
@@ -38,7 +45,10 @@ func (b *Bot) startWaitForPhoto() {
 					for _, user := range allUsers {
 						// Проверка в базе, отправил ли он уведомление
 						msgRunOut := tgbotapi.NewMessage(user.TelegramUserId, PhotoRunOut)
-						b.bot.Send(msgRunOut)
+						_, err := b.bot.Send(msgRunOut)
+						if err != nil {
+							log.Println(err)
+						}
 					}
 				}()
 
@@ -47,11 +57,16 @@ func (b *Bot) startWaitForPhoto() {
 				go func() {
 					for _, user := range allUsers {
 						msgEnd := tgbotapi.NewMessage(user.TelegramUserId, PhotoEnd)
-						b.bot.Send(msgEnd)
+						_, err := b.bot.Send(msgEnd)
+						if err != nil {
+							log.Println(err)
+						}
 					}
 				}()
 
 				b.sendAllPhotosInChat()
+
+				redis.Cache.Db.Set(Start, "0", 0)
 
 				log.Println("Ушел спать на 24 часа")
 				time.Sleep(time.Hour * 24)
@@ -65,7 +80,10 @@ func (b *Bot) sendAllPhotosInChat() {
 	allNotify, _ := tgnotify.GetAll()
 
 	for _, notify := range allNotify {
-		b.sendMessageForChat(chatId, notify)
+		err := b.sendMessageForChat(chatId, notify)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
 
@@ -73,7 +91,10 @@ func (b *Bot) sendMessageForChat(chatId int64, notify models.TelegramNotificatio
 	if notify.MediaType == Photo {
 		msg := tgbotapi.NewPhoto(chatId, tgbotapi.FileID(notify.MediaId))
 		msg.Caption = prepareMessage(notify)
-		b.bot.Send(msg)
+		_, err := b.bot.Send(msg)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	}
@@ -81,16 +102,25 @@ func (b *Bot) sendMessageForChat(chatId int64, notify models.TelegramNotificatio
 	if notify.MediaType == Video {
 		msg := tgbotapi.NewVideo(chatId, tgbotapi.FileID(notify.MediaId))
 		msg.Caption = prepareMessage(notify)
-		b.bot.Send(msg)
+		_, err := b.bot.Send(msg)
+		if err != nil {
+			return err
+		}
 	}
 
 	if notify.MediaType == VideoNote {
 		msg := tgbotapi.NewVideoNote(chatId, 10, tgbotapi.FileID(notify.MediaId))
-		b.bot.Send(msg)
+		_, err := b.bot.Send(msg)
+		if err != nil {
+			return err
+		}
 
 		msgCaption := tgbotapi.NewMessage(chatId, prepareMessage(notify))
-		b.bot.Send(msgCaption)
+		_, err = b.bot.Send(msgCaption)
+		if err != nil {
+			return err
+		}
 	}
 
-	return nil
+	return errors.New("указанный тип медиа не валидный")
 }
