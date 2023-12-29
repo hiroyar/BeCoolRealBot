@@ -49,7 +49,8 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) error {
 			continue
 		}
 
-		if redis.Cache.Db.Get(Start).String() == "0" {
+		condition := redis.Cache.Db.Get(Start).String() == "0"
+		if condition {
 			errMsg := tgbotapi.NewMessage(message.Chat.ID, PhotoBad)
 			_, err := b.bot.Send(errMsg)
 			if err != nil {

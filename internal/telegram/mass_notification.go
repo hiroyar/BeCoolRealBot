@@ -25,6 +25,8 @@ func (b *Bot) startWaitForPhoto() {
 			if timeNotification < currentTime {
 				time.Sleep(time.Hour)
 			} else {
+
+				log.Printf("Начинаю рассылку")
 				redis.Cache.Db.Set(Start, "1", 0)
 
 				allUsers, _ := telegram_user.GetAll()
@@ -39,19 +41,22 @@ func (b *Bot) startWaitForPhoto() {
 					}
 				}()
 
+				log.Println("Ждем 20 минут")
 				time.Sleep(time.Minute * 20)
 
 				go func() {
 					for _, user := range allUsers {
-						// Проверка в базе, отправил ли он уведомление
-						msgRunOut := tgbotapi.NewMessage(user.TelegramUserId, PhotoRunOut)
-						_, err := b.bot.Send(msgRunOut)
-						if err != nil {
-							log.Println(err)
+						if !tgnotify.IsSendMessage(user) {
+							msgRunOut := tgbotapi.NewMessage(user.TelegramUserId, PhotoRunOut)
+							_, err := b.bot.Send(msgRunOut)
+							if err != nil {
+								log.Println(err)
+							}
 						}
 					}
 				}()
 
+				log.Println("Ждем 10 минут")
 				time.Sleep(time.Minute * 10)
 
 				go func() {
@@ -77,7 +82,7 @@ func (b *Bot) startWaitForPhoto() {
 
 func (b *Bot) sendAllPhotosInChat() {
 	chatId := helpers.FromStringToInt64(os.Getenv("TELEGRAM_CHAT_ID"))
-	allNotify, _ := tgnotify.GetAll()
+	allNotify, _ := tgnotify.GetAllForToday()
 
 	for _, notify := range allNotify {
 		err := b.sendMessageForChat(chatId, notify)

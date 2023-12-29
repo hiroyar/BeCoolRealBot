@@ -54,6 +54,9 @@ func (b *Bot) handleCommand(message *tgbotapi.Message) error {
 }
 
 func (b *Bot) handleMessage(message *tgbotapi.Message) error {
+	// Проверка пользователя на то, что он уже отправил информацию или нет, если да, то больше не отправляет
+	// Функция isSendMessage()
+
 	if isMessagePhoto(message) {
 		msg := getMsg(message, PhotoOk)
 		_, err := b.bot.Send(msg)
