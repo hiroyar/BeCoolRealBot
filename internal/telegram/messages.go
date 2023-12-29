@@ -11,6 +11,7 @@ const (
 	BeginBad    = "Уже зарегистрированы"
 	End         = "Хорошо, удалил тебя из списка. Если захочешь вернуться, пришли команду /start."
 	EndBad      = "Уже удален"
+	SendAlready = "Данные уже были присланы"
 	PhotoOk     = "Фотография принята!"
 	VideoOk     = "Видео принято!"
 	VideoNoteOk = "Кружочек принят!"
@@ -25,5 +26,5 @@ const (
 func prepareMessage(notify models.TelegramNotification) string {
 	var user models.TelegramUser
 	postgresql.DB.Db.First(&user)
-	return fmt.Sprintf("%s %s, @%s \n%s", user.FirstName, user.LastName, user.Username, notify.SendTime)
+	return fmt.Sprintf("%s %s, @%s \n%s", user.FirstName, user.LastName, user.Username, notify.SendTime.Format("15:04:05"))
 }

@@ -11,6 +11,7 @@ type TelegramNotification struct {
 	TelegramChatId int64
 	MediaType      string
 	MediaId        string
+	Caption        string
 	IsSend         bool
 	SendTime       time.Time
 }

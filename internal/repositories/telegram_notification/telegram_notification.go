@@ -31,9 +31,7 @@ func GetAll() ([]models.TelegramNotification, error) {
 func GetAllForToday() ([]models.TelegramNotification, error) {
 	var notifications []models.TelegramNotification
 
-	today := time.Now()
-	startOfDay := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
-	endOfDay := startOfDay.AddDate(0, 0, 1).Add(-time.Nanosecond)
+	startOfDay, endOfDay := helpers.GetStartEndOfToday()
 
 	result := postgresql.DB.Db.Where("send_time BETWEEN ? AND ?", startOfDay, endOfDay).Find(&notifications)
 	if result.Error != nil {
@@ -46,9 +44,7 @@ func GetAllForToday() ([]models.TelegramNotification, error) {
 func IsSendMessage(user models.TelegramUser) bool {
 	var notification models.TelegramNotification
 
-	today := time.Now()
-	startOfDay := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
-	endOfDay := startOfDay.AddDate(0, 0, 1).Add(-time.Nanosecond)
+	startOfDay, endOfDay := helpers.GetStartEndOfToday()
 
 	result := postgresql.DB.Db.Where(
 		"telegram_user_id = ? AND send_time BETWEEN ? AND ?",
