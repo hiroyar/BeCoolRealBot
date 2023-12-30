@@ -46,7 +46,7 @@ func (b *Bot) startWaitForPhoto() {
 
 				go func() {
 					for _, user := range allUsers {
-						if !tgnotify.IsSendMessage(user) {
+						if !tgnotify.IsSendMessageTodayByUser(user) {
 							msgRunOut := tgbotapi.NewMessage(user.TelegramUserId, PhotoRunOut)
 							_, err := b.bot.Send(msgRunOut)
 							if err != nil {
@@ -111,6 +111,8 @@ func (b *Bot) sendMessageForChat(chatId int64, notify models.TelegramNotificatio
 		if err != nil {
 			return err
 		}
+
+		return nil
 	}
 
 	if notify.MediaType == VideoNote {
@@ -125,6 +127,8 @@ func (b *Bot) sendMessageForChat(chatId int64, notify models.TelegramNotificatio
 		if err != nil {
 			return err
 		}
+
+		return nil
 	}
 
 	return errors.New("указанный тип медиа не валидный")

@@ -41,7 +41,7 @@ func GetAllForToday() ([]models.TelegramNotification, error) {
 	return notifications, nil
 }
 
-func IsSendMessage(user models.TelegramUser) bool {
+func IsSendMessageTodayByUser(user models.TelegramUser) bool {
 	var notification models.TelegramNotification
 
 	startOfDay, endOfDay := helpers.GetStartEndOfToday()
@@ -53,5 +53,20 @@ func IsSendMessage(user models.TelegramUser) bool {
 		endOfDay,
 	).Find(&notification)
 
-	return result.Error == nil
+	return result.RowsAffected > 0
+}
+
+func IsSendMessageTodayByChat(chatId int64) bool {
+	var exist models.TelegramNotification
+
+	startOfDay, endOfDay := helpers.GetStartEndOfToday()
+
+	result := postgresql.DB.Db.Where(
+		"telegram_user_id = ? AND send_time BETWEEN ? AND ?",
+		chatId,
+		startOfDay,
+		endOfDay,
+	).Find(&exist)
+
+	return result.RowsAffected > 0
 }

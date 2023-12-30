@@ -5,7 +5,6 @@ import (
 	"BeCoolRealBot/internal/models"
 	tgnotify "BeCoolRealBot/internal/repositories/telegram_notification"
 	tguser "BeCoolRealBot/internal/repositories/telegram_user"
-	"errors"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -55,14 +54,8 @@ func (b *Bot) handleCommand(message *tgbotapi.Message) error {
 }
 
 func (b *Bot) handleMessage(message *tgbotapi.Message) error {
-	var user models.TelegramUser
-	result := postgresql.DB.Db.First(&user, message.Chat.ID)
-	if result != nil {
-		return errors.New("пользователь не найден")
-	}
-
 	// Проверка пользователя на то, что он уже отправил информацию или нет, если да, то больше не отправляет
-	if tgnotify.IsSendMessage(user) {
+	if tgnotify.IsSendMessageTodayByChat(message.Chat.ID) {
 		msg := getMsg(message, SendAlready)
 		_, err := b.bot.Send(msg)
 		if err != nil {
