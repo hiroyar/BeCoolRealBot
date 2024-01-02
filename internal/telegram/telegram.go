@@ -2,8 +2,10 @@ package telegram
 
 import (
 	"BeCoolRealBot/internal/database/redis"
+	"BeCoolRealBot/internal/helpers"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
+	"os"
 )
 
 type Bot struct {
@@ -15,7 +17,7 @@ func NewBot(bot *tgbotapi.BotAPI) *Bot {
 }
 
 func (b *Bot) Start() error {
-	b.bot.Debug = true
+	b.bot.Debug = helpers.FromStringToBool(os.Getenv("TELEGRAM_BOT_DEBUG"))
 	log.Printf("Authorized on account %s", b.bot.Self.UserName)
 
 	/** Запускает горутину, что будет приемки фотографий */

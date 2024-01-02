@@ -21,3 +21,12 @@ func FromStringToInt(text string) int {
 	}
 	return str
 }
+
+func FromStringToBool(text string) bool {
+	boolean, err := strconv.ParseBool(text)
+	if err != nil {
+		log.Fatal("Ошибка перевода string в bool")
+	}
+
+	return boolean
+}
